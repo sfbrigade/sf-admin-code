@@ -89,8 +89,8 @@ an_img = first_level_container.css('img')[0]
 
 browser.frame(:name,"contents").element(css: an_img.css_path).click
 
-puts "waiting 6 seconds for operation..."
-sleep(6)
+puts "waiting 7 seconds for operation..."
+sleep(7)
 puts "done waiting"
 
 # update after pressing the button (takes some time to load--may need to lengthen)
@@ -101,8 +101,8 @@ morenode_img = first_level_container.css("[ct='application/morenode']")[0].css('
 
 browser.frame(:name,"contents").element(css: morenode_img.css_path).click
 
-puts "waiting 4 seconds for operation..."
-sleep(4)
+puts "waiting 5 seconds for operation..."
+sleep(5)
 puts "done waiting"
 
 # update again after pressing more button
@@ -131,8 +131,8 @@ chapters.each_with_index do |chapter,i|
 		browser.frame(:name,"contents").element(css: chapter_link.css_path).click
   
 		#wait 2 seconds
-		puts "waiting 2 seconds for operation..."
-		sleep(2)
+		puts "waiting 3 seconds for operation..."
+		sleep(3)
 		puts "done waiting"
 
 		#scoot over to the main window
@@ -142,10 +142,26 @@ chapters.each_with_index do |chapter,i|
   		chapter_title = doc_body.css("[class='Chapter']")[0].css('span')[0].text
 	
 		# originally the index started at ': ' but now ':'
+		
+		# also need to get the index of '.' because some chapters have that?
+		colon_index = chapter_title.index(':')
+		period_index = chapter_title.index('.')
+		divider_index = 0
+		
+		if colon_index != nil
+			if colon_index < 20
+				divider_index = colon_index
+			end
+		else
+			divider_index = period_index
+		end
 	
 		# get the index and text title separated
-		chapter_index = chapter_title[(chapter_title.index('R')+2)..(chapter_title.index(':')-1)]
-		chapter_name = chapter_title[(chapter_title.index(':')+2)..-1]
+		chapter_index = chapter_title[(chapter_title.index('R')+2)..(divider_index-1)]
+		chapter_name = chapter_title[(divider_index+2)..-1]
+		
+		puts chapter_index
+		puts chapter_name
 		
 		# add the index and text to an array
  		chapter_array = Array.new()
@@ -179,60 +195,103 @@ chapters.each_with_index do |chapter,i|
   		  	sections1 = paragraphs.select { |p| is_a_section(p.to_s)}
   
   		  	sections1.each_with_index do |section1,k|
-  		    	# for each section:
+  		  		if i == 51 && k == 91
+  		  		elsif i == 51 && k == 92
+  		  		else
+  		    		# for each section:
   
-			  	# grab and add the section's title
-			  	# some of theme are in different formats!
-			  	# most are in a span, but a few are just in the h5
+				  	# grab and add the section's title
+				  	# some of theme are in different formats!
+				  	# most are in a span, but a few are just in the h5
 			  	
-			  	section_title = section1.text.gsub("\n"," ")
+				  	section_title = section1.text.gsub("\n"," ")
+				  	
+				  	puts section_title
   
-			  	# grab the text inside the section. last one is tricky!!
-			  	if k < sections1.length - 1
-				  	paragraphs1 = collect_between(section1,sections1[k+1])
-		  	  	elsif j < articles.length - 1
-		  	  		#replacing histories.last with footer
-	              	paragraphs1 = collect_between(section1,histories.last)
-	            else
-	              	paragraphs1 = collect_between(section1,footer)
-			  	end
+			  		# grab the text inside the section. last one is tricky!!
+			  		if k < sections1.length - 1
+				  		paragraphs1 = collect_between(section1,sections1[k+1])
+			  	  	elsif j < articles.length - 1
+			  	  		#replacing histories.last with footer
+	    	          	paragraphs1 = collect_between(section1,histories.last)
+	        	    else
+	            	  	paragraphs1 = collect_between(section1,footer)
+				  	end
 		  
-			  	section_text1 = ""
+				  	section_text1 = ""
 		  
-			  	paragraphs1.each_with_index do |paragraph1,l|
-			  		if l != 0 && l < paragraphs1.length - 1 #&& k < sections1.length - 1
-				  		section_text1 += paragraph1
-			  	#	elsif l != 0 && k == sections1.length - 1
-			  	#		section_text1 += paragraph1
-			  		end
-			  	end
+				  	paragraphs1.each_with_index do |paragraph1,l|
+				  		if l != 0 && l < paragraphs1.length - 1 #&& k < sections1.length - 1
+					  		section_text1 += paragraph1
+				  	#	elsif l != 0 && k == sections1.length - 1
+				  	#		section_text1 += paragraph1
+				  		end
+				  	end
 		  
-		  		# parse section_title
-		  		section_title_a = section_title[(section_title.index(' ')+1)..-1]
-		  		section_title_index = section_title_a[0...section_title_a.index(' ')]
-		  		section_title_text = section_title_a[(section_title_a.index(' ')+1)..-1]
+			  		# parse section_title
+			  		section_title_a = section_title[(section_title.index(' ')+1)..-1]
 		  		
-		  		# add section title to new array
-		  		section_array = Array.new()
-		  		section_array.push(section_title_index)
-		  		section_array.push(section_title_text)
-		  		sections_array.push(section_array)
+			  		section_title_index = section_title_a[0...section_title_a.index(' ')]
+		  			section_title_text = section_title_a[(section_title_a.index(' ')+1)..-1]
 		  		
-		  		# TODO: create a file for this section
-  
+		  			# add section title to new array
+			  		section_array = Array.new()
+			  		section_array.push(section_title_index)
+			  		section_array.push(section_title_text)
+		  			sections_array.push(section_array)
+		  		
+		  			# create a JSON Object for this section
+				  	section_object = Hash.new()
+		  	
+				  	# text
+				  	section_object.merge!(:text => section_text1)
+		  	
+		  			# credits (tag is history but it seems more credit like?)
+		  	
+				  	# division (identifier and text). use article
+		  	
+				  	# chapter (identifier and text). use chapter
+		  	
+		  			# index is usually a period
+		  			# like 'SEC. 10.100-373.'
+		  			# but sometimes a colon
+		  			# like 'Appendix A:'
+		  			section_period_index = section_title_index.index('.')
+		  	
+				  	# heading
+				  	section_heading = Hash.new()
+				  	if section_period_index != nil
+					  	section_heading.merge!(:title => section_title_index[0...section_period_index])
+			 		 	section_heading.merge!(:chaptersection => section_title_index[(section_period_index+1)..-1])
+			 		else
+			 			section_heading.merge!(:title => section_title_index)
+			 		end
+		 		 	section_heading.merge!(:identifier => section_title_index)
+				  	section_heading.merge!(:catch_text => section_title_text)
+				  	section_object.merge!(:heading => section_heading)
+				  	
+		  			# create a file for this section and put in json with title_index
+		  			File.open("sections/" + section_title_index[0...-1] + "json","w") do |f|
+
+						f.write(section_object.to_json)
+
+					end
+  				end
   	  	end
   	end
   
   	# at chapter level, if no articles then grab any sections in it
   	if articles.length == 0
   
-  	  	sections2 = doc_body.css("[class='Section']") 	 
+  	  	sections2 = doc_body.css("[class='Section']") 	
   
 	  	sections2.each_with_index do |section2,k|
   		  	# for each section:
   
 		  	# grab and add the section's title
 		  	section_title2 = section2.css('span')[0].text
+		  	
+		  	puts section_title2
   
 		  	# grab the text inside the section. last one is tricky
 		  	if k < sections2.length - 1
@@ -240,7 +299,7 @@ chapters.each_with_index do |chapter,i|
 		  	else
 	 		  	paragraphs = collect_between(section2,footer)
 	 	#	else
-	 			# TODO: need case for 29A, where the last paragraph DOESN't have history
+	 			# MAYBE TODO: need case for 29A, where the last paragraph DOESN't have history
 	 			# last before div?????
 	 	#		paragraphs = collect_between(section2,histories.last)
 		  	end
@@ -279,16 +338,26 @@ chapters.each_with_index do |chapter,i|
 		  	
 		  	# chapter (identifier and text). use chapter
 		  	
-		  	# heading
-		  	section_heading = Hash.new()
-		  	section_heading.merge!(:title => section_title_index[0...section_title_index.index('.')])
-		  	section_heading.merge!(:chaptersection => section_title_index[(section_title_index.index('.')+1)..-1])
+		  	# index is usually a period
+		  	# like 'SEC. 10.100-373.'
+		  	# but sometimes a colon
+		  	# like 'Appendix A:'
+		  	section_period_index = section_title_index.index('.')
+		  	
+			# heading
+			section_heading = Hash.new()
+			if section_period_index != nil
+			  	section_heading.merge!(:title => section_title_index[0...section_period_index])
+			 	section_heading.merge!(:chaptersection => section_title_index[(section_period_index+1)..-1])
+			else
+				section_heading.merge!(:title => section_title_index)
+			end
 		  	section_heading.merge!(:identifier => section_title_index)
 		  	section_heading.merge!(:catch_text => section_title_text)
 		  	section_object.merge!(:heading => section_heading)
 		  	
 		  	# create a file for this section and put in json with title_index
-		  	File.open(section_title_index + ".json","w") do |f|
+		  	File.open("sections/" + section_title_index[0...-1] + "json","w") do |f|
 
 				f.write(section_object.to_json)
 
