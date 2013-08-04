@@ -18,66 +18,6 @@ def is_footer(str)
     (str =~ /American Legal Publishing Corporation provides these documents for informational purposes only./i) != nil
 end
 
-# methods for database access
-def insert_chapter(title)
-
-#	my = Mysql::new("host", "user", "passwd", "db")
-	con = Mysql::new('127.0.0.1', 'root', 'root', 'sf_admin_code')
-	
-	pst = con.prepare "INSERT INTO Chapter(title) VALUES(?)"
-    pst.execute title
-    con.close
-	
-	return con.insert_id()
-end
-
-def insert_article(title)
-
-	con = Mysql.new '127.0.0.1', 'root', 'root', 'sf_admin_code'
-	pst = con.prepare "INSERT INTO Article(title) VALUES(?)"
-    pst.execute title
-    con.close
-
-	return con.insert_id()
-end
-
-def insert_section(title,text)
-
-	con = Mysql.new '127.0.0.1', 'root', 'root', 'sf_admin_code'
-	pst = con.prepare "INSERT INTO Section(title,text) VALUES(?,?)"
-    pst.execute title,text
-    con.close
-    
-    return con.insert_id()
-end
-
-def link_chapter_article(chapter_id,article_id)
-
-	con = Mysql.new '127.0.0.1', 'root', 'root', 'sf_admin_code'
-	pst = con.prepare "INSERT INTO ChapterArticle(chapter_id,article_id) VALUES(?,?)"
-    pst.execute chapter_id,article_id
-    con.close
-
-end
-
-def link_chapter_section(chapter_id,section_id)
-
-	con = Mysql.new '127.0.0.1', 'root', 'root', 'sf_admin_code'
-	pst = con.prepare "INSERT INTO ChapterSection(chapter_id,section_id) VALUES(?,?)"
-    pst.execute chapter_id,section_id
-    con.close
-
-end
-
-def link_article_section(article_id,section_id)
-
-	con = Mysql.new '127.0.0.1', 'root', 'root', 'sf_admin_code'
-	pst = con.prepare "INSERT INTO ArticleSection(article_id,section_id) VALUES(?,?)"
-    pst.execute article_id,section_id
-    con.close
-
-end
-
 browser = Watir::Browser.new
 browser.goto 'http://www.amlegal.com/nxt/gateway.dll?f=templates&fn=default.htm&vid=amlegal:sanfrancisco_ca'
 
@@ -163,6 +103,10 @@ chapters.each_with_index do |chapter,i|
 		puts chapter_index
 		puts chapter_name
 		
+		if i == chapters.length - 2
+			chapter_index = "A"
+		end
+		
 		# add the index and text to an array
  		chapter_array = Array.new()
 		chapter_array.push(chapter_index)
@@ -233,6 +177,8 @@ chapters.each_with_index do |chapter,i|
 		  		
 			  		section_title_index = section_title_a[0...section_title_a.index(' ')]
 		  			section_title_text = section_title_a[(section_title_a.index(' ')+1)..-1]
+		  			
+		  			section_title_index = section_title_index[0...-2]
 		  		
 		  			# add section title to new array
 			  		section_array = Array.new()
@@ -271,7 +217,7 @@ chapters.each_with_index do |chapter,i|
 				  	section_object.merge!(:heading => section_heading)
 				  	
 		  			# create a file for this section and put in json with title_index
-		  			File.open("sections/" + section_title_index[0...-1] + "json","w") do |f|
+		  			File.open("sections/" + section_title_index + ".json","w") do |f|
 
 						f.write(section_object.to_json)
 
@@ -318,7 +264,22 @@ chapters.each_with_index do |chapter,i|
 		  	# parse section_title
 		  	section_title_a = section_title2[(section_title2.index(' ')+1)..-1]
 		  	section_title_index = section_title_a[0...section_title_a.index(' ')]
-		  	section_title_text = section_title_a[(section_title_a.index(' ')+1)..-1]
+		  	section_title_text = section_title_a[(section_title_a.index(' ')+1)..-1]	
+		  		  	
+		  	puts "then..."
+		  	puts section_title_index
+		  	puts section_title_text
+		  	
+		  	if i == chapters.length - 2
+		  		section_title_text = section_title_text[2..-1]
+		  		section_title_index = "A." + section_title_index[0...-1]
+		  	else
+		  		section_title_index = section_title_index[0...-2]
+		  	end
+		  	
+		  	puts "now..."
+		  	puts section_title_index
+		  	puts section_title_text
 		  		
 		  	# add section title to new array
 		  	section_array = Array.new()
@@ -357,7 +318,7 @@ chapters.each_with_index do |chapter,i|
 		  	section_object.merge!(:heading => section_heading)
 		  	
 		  	# create a file for this section and put in json with title_index
-		  	File.open("sections/" + section_title_index[0...-1] + "json","w") do |f|
+		  	File.open("sections/" + section_title_index + ".json","w") do |f|
 
 				f.write(section_object.to_json)
 

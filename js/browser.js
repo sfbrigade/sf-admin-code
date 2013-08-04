@@ -101,7 +101,9 @@ d3.json('index.json').on('load', function(index) {
     });
 
     var byTitle = d3.nest().key(function getSectionNumber(d) {
-        return d[0].split('-')[0];
+    	// mcl edit aug 3
+       // return d[0].split('-')[0];
+       return d[0].split('.')[0];
     }).map(index.sections);
 
     router.init();
